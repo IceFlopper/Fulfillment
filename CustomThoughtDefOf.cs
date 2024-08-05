@@ -11,11 +11,13 @@ namespace FulfillmentModNamespace
             DefOfHelper.EnsureInitializedInCtor(typeof(CustomThoughtDefOf));
         }
 
-        public static ThoughtDef FulfillmentVeryLow;
-        public static ThoughtDef FulfillmentLow;
-        public static ThoughtDef FulfillmentMediumLow;
-        public static ThoughtDef FulfillmentMedium;
-        public static ThoughtDef FulfillmentMediumHigh;
-        public static ThoughtDef FulfillmentHigh;
+        public static ThoughtDef Fulfillment_FulfillmentVeryLow;
+        public static ThoughtDef Fulfillment_FulfillmentLow;
+        public static ThoughtDef Fulfillment_FulfillmentMediumLow;
+        public static ThoughtDef Fulfillment_FulfillmentMedium;
+        public static ThoughtDef Fulfillment_FulfillmentMediumHigh;
+        public static ThoughtDef Fulfillment_FulfillmentHigh;
+        public static ThoughtDef Fulfillment_FulfillmentVeryHigh;
+
     }
 }

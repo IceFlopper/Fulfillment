@@ -24,7 +24,7 @@ namespace FulfillmentModNamespace
                     SkillRecord skill = __instance.pawn.skills.GetSkill(skillDef);
                     if (skill != null && skill.passion > Passion.None)
                     {
-                        need.GainFulfillment();
+                        need.GainFulfillment(skill);
                         break; // Gain fulfillment only once per tick
                     }
                 }

@@ -12,9 +12,7 @@ namespace FulfillmentModNamespace
         {
             try
             {
-                //Log.Message("Need_Fulfillment: Trying to get NeedDef 'Fulfillment_Fulfillment'");
                 this.def = DefDatabase<NeedDef>.GetNamed("Fulfillment_Fulfillment", true);
-                //Log.Message("Need_Fulfillment: Successfully got NeedDef 'Fulfillment_Fulfillment'");
             }
             catch (Exception ex)
             {
@@ -22,7 +20,7 @@ namespace FulfillmentModNamespace
             }
             this.threshPercents = new List<float>
             {
-                0.05f, 0.20f, 0.30f, 0.60f, 0.75f, 0.90f // Example thresholds
+                0.05f, 0.20f, 0.40f, 0.55f, 0.80f, 0.95f
             };
         }
 
@@ -33,7 +31,6 @@ namespace FulfillmentModNamespace
                 if (this.pawn != null)
                 {
                     float comfort = this.pawn.GetStatValue(StatDefOf.Comfort, true, -1);
-                    //Log.Message($"FulfillmentRate: Pawn comfort value = {comfort}");
                     return comfort > 0 ? comfort : 1f; // Ensure comfort is not zero to avoid zero FallPerTick
                 }
                 Log.Error("FulfillmentRate: Pawn is null");
@@ -45,27 +42,27 @@ namespace FulfillmentModNamespace
         {
             get
             {
-                if (this.CurLevel <= 0.05f)
+                if (this.CurLevel < 0.05f)
                 {
                     return FulfillmentCategory.VeryLow;
                 }
-                if (this.CurLevel <= 0.20f)
+                if (this.CurLevel < 0.20f && this.CurLevel >= 0.05f)
                 {
                     return FulfillmentCategory.Low;
                 }
-                if (this.CurLevel <= 0.30f)
+                if (this.CurLevel < 0.40f && this.CurLevel >= 0.20f)
                 {
                     return FulfillmentCategory.MediumLow;
                 }
-                if (this.CurLevel <= 0.60f)
+                if (this.CurLevel >= 0.50f && this.CurLevel < 0.65f)
                 {
                     return FulfillmentCategory.Medium;
                 }
-                if (this.CurLevel <= 0.75f)
+                if (this.CurLevel >= 0.65f && this.CurLevel < 0.80f)
                 {
                     return FulfillmentCategory.MediumHigh;
                 }
-                return FulfillmentCategory.High;
+                return FulfillmentCategory.High; // for CurLevel >= 0.80f
             }
         }
 
@@ -73,10 +70,14 @@ namespace FulfillmentModNamespace
         {
             get
             {
-                float baseRate = 0.0000001f * this.FulfillmentRate; // Base rate for depletion
-                if (this.CurLevel >= 0.90f)
+                float baseRate = 0.0000012f * this.FulfillmentRate; // Base rate for depletion
+                if (this.CurLevel >= 0.95f)
                 {
-                    return baseRate * 2; // Faster depletion when at extreme ends
+                    return baseRate * 1.2f; // Faster depletion above 95%
+                }
+                if (this.CurLevel >= 0.80f)
+                {
+                    return baseRate * 1.1f; // Faster depletion above 80%
                 }
                 return baseRate;
             }
@@ -102,16 +103,23 @@ namespace FulfillmentModNamespace
             }
         }
 
-        public void GainFulfillment()
+        public void GainFulfillment(SkillRecord skill)
         {
-            float gainRate = 0.000015f; // Base rate for gain
+            float gainRate = 0.00001f; // Base rate for gain
             if (this.CurLevel <= 0.05f)
             {
-                gainRate *= 2; // Faster gain when at extreme low
+                gainRate *= 1.2f; // Faster gain when at extreme low
+            }
+            if (skill.passion == Passion.Minor)
+            {
+                gainRate *= 1f; // Increase gain rate for passion
+            }
+            else if (skill.passion == Passion.Major)
+            {
+                gainRate *= 1.25f; // Further increase gain rate for burning passion
             }
             this.lastGainTick = Find.TickManager.TicksGame;
             this.CurLevel = Mathf.Min(this.CurLevel + gainRate, 1f); // Reduced gain rate
-            //Log.Message($"GainFulfillment called: CurLevel={this.CurLevel}");
         }
 
         public override void ExposeData()
@@ -124,18 +132,16 @@ namespace FulfillmentModNamespace
         {
             if (DebugSettings.godMode)
             {
-                this.CurLevel = 0.2f; // Start at 20% in god mode
+                this.CurLevel = 0.3f; // Start at 30% in god mode
                 return;
             }
-            this.CurLevel = 0.2f; // Start at 20% normally
+            this.CurLevel = 0.3f; // Start at 30% normally
         }
 
         public override void NeedInterval()
         {
-            //Log.Message($"NeedInterval called: CurLevel={this.CurLevel}, FallPerTick={this.FallPerTick}");
             float oldCurLevel = this.CurLevel;
             this.CurLevel -= this.FallPerTick * 150f;
-            //Log.Message($"NeedInterval updated: oldCurLevel={oldCurLevel}, newCurLevel={this.CurLevel}");
 
             if (this.CurLevel < 0f)
             {
@@ -143,17 +149,11 @@ namespace FulfillmentModNamespace
             }
             ApplyMoodEffects();
 
-            // Check if there are any unexpected conditions
-            //Log.Message($"NeedInterval after ApplyMoodEffects: CurLevel={this.CurLevel}");
-
             if (this.CurCategory <= FulfillmentCategory.Low && this.pawn != null && this.pawn.CurrentBed() != null && this.pawn.health.capacities.CanBeAwake)
             {
                 this.CurLevel = 1f;
-                //Log.Message("NeedInterval: Reset CurLevel to 1f due to low category and bed condition");
                 return;
             }
-
-            //Log.Message($"NeedInterval before ticksAtZero update: CurCategory={this.CurCategory}, ticksAtZero={this.ticksAtZero}");
 
             if (this.CurCategory <= FulfillmentCategory.Low)
             {
@@ -163,43 +163,60 @@ namespace FulfillmentModNamespace
             {
                 this.ticksAtZero = 0;
             }
-
-            //Log.Message($"NeedInterval end: CurLevel={this.CurLevel}, ticksAtZero={this.ticksAtZero}");
         }
 
         private void ApplyMoodEffects()
         {
             if (this.pawn.needs.mood == null) return;
 
+            ThoughtDef thoughtDef = null;
+
             if (this.CurLevel < 0.05f)
             {
-                ApplyHediffOrThought(CustomThoughtDefOf.FulfillmentVeryLow);
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentVeryLow;
             }
-            else if (this.CurLevel < 0.20f)
+            else if (this.CurLevel < 0.20f && this.CurLevel >= 0.05f)
             {
-                ApplyHediffOrThought(CustomThoughtDefOf.FulfillmentLow);
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentLow;
             }
-            else if (this.CurLevel < 0.30f)
+            else if (this.CurLevel < 0.40f && this.CurLevel >= 0.20f)
             {
-                ApplyHediffOrThought(CustomThoughtDefOf.FulfillmentMediumLow);
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentMediumLow;
             }
-            else if (this.CurLevel < 0.60f)
+            else if (this.CurLevel >= 0.50f && this.CurLevel < 0.65f)
             {
-                ApplyHediffOrThought(CustomThoughtDefOf.FulfillmentMedium);
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentMedium;
             }
-            else if (this.CurLevel < 0.75f)
+            else if (this.CurLevel >= 0.65f && this.CurLevel < 0.80f)
             {
-                ApplyHediffOrThought(CustomThoughtDefOf.FulfillmentMediumHigh);
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentMediumHigh;
             }
-            else if (this.CurLevel >= 0.90f)
+            else if (this.CurLevel >= 0.80f && this.CurLevel < 0.95f)
             {
-                ApplyHediffOrThought(CustomThoughtDefOf.FulfillmentHigh);
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentHigh;
+            }
+            else if (this.CurLevel >= 0.95f)
+            {
+                thoughtDef = CustomThoughtDefOf.Fulfillment_FulfillmentVeryHigh;
+            }
+
+            if (thoughtDef != null)
+            {
+                ApplyHediffOrThought(thoughtDef);
             }
         }
 
         private void ApplyHediffOrThought(ThoughtDef thoughtDef)
         {
-            if (!this.pawn.needs.mood.thoughts.memories.Memories.Exists(m => m.def == thoughtDef))
+            if (this.pawn.needs.mood.thoughts.memories.Memories.Exists(m => m.def == thoughtDef))
+            {
+                var memory = this.pawn.needs.mood.thoughts.memories.Memories.Find(m => m.def == thoughtDef);
+                if (memory != null)
+                {
+                    memory.Renew();
+                }
+            }
+            else
             {
                 this.pawn.needs.mood.thoughts.memories.TryGainMemory(thoughtDef);
             }
