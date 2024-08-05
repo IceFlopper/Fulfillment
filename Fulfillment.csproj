@@ -57,10 +57,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomThoughtDefOf.cs" />
+    <Compile Include="FulfillmentMoodMod .cs" />
+    <Compile Include="FulfillmentMoodSettings .cs" />
     <Compile Include="JobDriver_DriverTick_Patch.cs" />
     <Compile Include="Need_Fulfillment.cs" />
     <Compile Include="Pawn_NeedsTracker .cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ThoughtWorker_Fulfillment .cs" />
+    <Compile Include="Thought_CustomMood.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
