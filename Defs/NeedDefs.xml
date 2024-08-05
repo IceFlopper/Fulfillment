@@ -1,0 +1,12 @@
+﻿<Defs>
+  <NeedDef>
+    <defName>Fulfillment</defName>
+    <label>fulfillment</label>
+    <description>Pawns feel fulfilled when working on jobs they are passionate about.</description>
+    <needClass>MyMod.Needs.Need_Fulfillment</needClass>
+    <minIntelligence>Humanlike</minIntelligence>
+    <major>true</major>
+    <baseLevel>0.5</baseLevel>
+    <listPriority>100</listPriority>
+  </NeedDef>
+</Defs>

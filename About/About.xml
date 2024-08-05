@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThoughtDef>
+    <defName>Fulfillment_Low</defName>
+    <label>feeling unfulfilled</label>
+    <thoughtClass>Thought_MemoryDynamic</thoughtClass>
+    <durationDays>1</durationDays>
+    <stackLimit>1</stackLimit>
+    <effectMultiplyingStat>PsychicSensitivity</effectMultiplyingStat>
+    <stageThresholds>
+      <li>0.2</li>
+    </stageThresholds>
+    <stages>
+      <li>
+        <label>feeling unfulfilled</label>
+        <description>They are feeling unfulfilled in their work.</description>
+        <baseMoodEffect>-10</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+  <ThoughtDef>
+    <defName>Fulfillment_High</defName>
+    <label>feeling fulfilled</label>
+    <thoughtClass>Thought_MemoryDynamic</thoughtClass>
+    <durationDays>1</durationDays>
+    <stackLimit>1</stackLimit>
+    <effectMultiplyingStat>PsychicSensitivity</effectMultiplyingStat>
+    <stageThresholds>
+      <li>0.8</li>
+    </stageThresholds>
+    <stages>
+      <li>
+        <label>feeling fulfilled</label>
+        <description>They are feeling fulfilled in their work.</description>
+        <baseMoodEffect>10</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+</Defs>
